@@ -1,0 +1,45 @@
+import requests
+from pprint import pprint
+
+def get_token():
+    with open('token.txt') as file:
+        token = file.readline()
+
+    return token
+
+class YandexDisk:
+    files_url: str = 'https://https://cloud-api.yandex.net/v1/disk/resources/files'
+    upload_url: str = 'https://https://cloud-api.yandex.net/v1/disk/resources/upload'
+
+    def __init__(self, token: str):
+        self.token = token
+
+    def get_headers(self):
+        return {
+            'Content-Tipe': 'application/json',
+            'Authorization': f'OAuth {self.token}'
+        }
+
+    @property
+    def header(self):
+        return self.get_headers()
+
+    def _get_upload_link(self, file_path: str) -> dict:
+        params = {'path': file_path, 'overwrite': 'true'}
+        response = requests.get(self.upload_url, params=params, headers=self.header)
+        pprint(response.json())
+        return response.json()
+
+    def upload(self, file_path: str, file_name:str):
+        href = self._get_upload_link(file_path).get('href')
+        if not href:
+            return False
+
+        response = requests.put(href, data=open(file_path, 'rb'))
+        if response.status_code == 201:
+            print('Файл загружен')
+            return True
+
+
+ya = YandexDisk(get_token())
+ya.upload('file.txt', 'file.txt')
